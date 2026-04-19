@@ -26,24 +26,54 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="p-6">
-      <h1>Applications</h1>
+    <div className="bg-gray-100 min-h-screen">
+      <div className="max-w-5xl mx-auto p-6">
+        <h1 className="text-2xl font-semibold mb-4">Applications</h1>
 
-      {applications.map(app => (
-        <div key={app.id} className="border p-4 my-2">
-          <p>Name: {app.user.name}</p>
-          <p>Email: {app.user.email}</p>
-          <p>Status: {app.status}</p>
+        <div className="grid gap-4">
+          {applications.map(app => (
+            <div
+              key={app.id}
+              className="bg-white p-4 rounded-lg shadow flex justify-between items-center"
+            >
+              <div>
+                <p className="font-medium">{app.user.name}</p>
+                <p className="text-sm text-gray-500">{app.user.email}</p>
+                <p className="text-sm mt-1">
+                  Status:{' '}
+                  <span
+                    className={
+                      app.status === 'APPROVED'
+                        ? 'text-green-600'
+                        : app.status === 'REJECTED'
+                        ? 'text-red-600'
+                        : 'text-gray-600'
+                    }
+                  >
+                    {app.status}
+                  </span>
+                </p>
+              </div>
 
-          <button onClick={() => updateStatus(app.id, 'APPROVED')}>
-            Approve
-          </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => updateStatus(app.id, 'APPROVED')}
+                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                >
+                  Approve
+                </button>
 
-          <button onClick={() => updateStatus(app.id, 'REJECTED')}>
-            Reject
-          </button>
+                <button
+                  onClick={() => updateStatus(app.id, 'REJECTED')}
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   )
 }

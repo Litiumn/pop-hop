@@ -41,14 +41,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-screen items-center justify-center">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <h1 className="text-xl font-bold">Login</h1>
+    <div className="flex h-screen items-center justify-center bg-gray-100">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md w-80 space-y-4">
+        <h1 className="text-xl font-bold text-center">Login</h1>
 
-        <input name="email" placeholder="Email" onChange={handleChange} />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} />
+        <input
+          name="email"
+          placeholder="Email"
+          onChange={handleChange}
+          className="w-full border p-2 rounded"
+        />
 
-        <button type="submit">Login</button>
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          onChange={handleChange}
+          className="w-full border p-2 rounded"
+        />
+
+        <button className="w-full bg-blue-500 text-white p-2 rounded">
+          Login
+        </button>
       </form>
     </div>
   )

@@ -1,6 +1,11 @@
-import { getEvents } from '@/services/event.service'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
-  const events = await getEvents()
-  return Response.json(events)
+  try {
+    const events = await prisma.event.findMany()
+
+    return Response.json(events)
+  } catch (error: any) {
+    return new Response(error.message, { status: 500 })
+  }
 }

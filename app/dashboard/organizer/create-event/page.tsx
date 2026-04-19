@@ -64,18 +64,22 @@ export default function CreateEventPage() {
   }
 
   return (
-    <div className="p-6">
-      <h1>Create Event</h1>
+    <div className="flex justify-center p-6 bg-gray-100 min-h-screen">
+      <div className="max-w-5xl mx-auto p-6">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-96 space-y-4">
+        <h1 className="text-xl font-bold text-center">Create Event</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input name="title" placeholder="Title" onChange={handleChange} />
-        <input name="description" placeholder="Description" onChange={handleChange} />
-        <input name="date" type="date" onChange={handleChange} />
-        <input name="boothLimit" type="number" onChange={handleChange} />
-        <input name="price" type="number" onChange={handleChange} />
+        <input name="title" placeholder="Title" onChange={handleChange} className="w-full border p-2 rounded" />
+        <input name="description" placeholder="Description" onChange={handleChange} className="w-full border p-2 rounded" />
+        <input name="date" type="date" onChange={handleChange} className="w-full border p-2 rounded" />
+        <input name="boothLimit" type="number" placeholder="Booth Limit" onChange={handleChange} className="w-full border p-2 rounded" />
+        <input name="price" type="number" placeholder="Price" onChange={handleChange} className="w-full border p-2 rounded" />
 
-        <button type="submit">Create</button>
+        <button className="w-full bg-green-500 text-white p-2 rounded">
+          Create Event
+        </button>
       </form>
+      </div>
     </div>
   )
 }

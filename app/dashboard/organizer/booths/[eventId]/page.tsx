@@ -33,33 +33,47 @@ export default function BoothPage() {
   }
 
   return (
-    <div className="p-6">
-      <h1>Booth Assignment</h1>
+    <div className="bg-gray-100 min-h-screen">
+      <div className="max-w-5xl mx-auto p-6">
+        <h1 className="text-2xl font-semibold mb-4">Booth Assignment</h1>
 
-      {booths.map(booth => (
-        <div key={booth.id} className="border p-3 my-2">
-          <p>Booth #{booth.number}</p>
-
-          {booth.isTaken ? (
-            <p>Assigned to: {booth.vendor?.name}</p>
-          ) : (
-            <select
-              onChange={(e) => assign(booth.id, e.target.value)}
-              defaultValue=""
+        <div className="grid gap-4">
+          {booths.map(booth => (
+            <div
+              key={booth.id}
+              className="bg-white p-4 rounded-lg shadow flex justify-between items-center"
             >
-              <option value="" disabled>
-                Select Vendor
-              </option>
+              <div>
+                <p className="font-medium">Booth #{booth.number}</p>
 
-              {applications.map(app => (
-                <option key={app.user.id} value={app.user.id}>
-                  {app.user.name}
-                </option>
-              ))}
-            </select>
-          )}
+                {booth.isTaken && (
+                  <p className="text-sm text-gray-500">
+                    Assigned to: {booth.vendor?.name}
+                  </p>
+                )}
+              </div>
+
+              {!booth.isTaken && (
+                <select
+                  onChange={(e) => assign(booth.id, e.target.value)}
+                  defaultValue=""
+                  className="border border-gray-300 p-2 rounded"
+                >
+                  <option value="" disabled>
+                    Select Vendor
+                  </option>
+
+                  {applications.map(app => (
+                    <option key={app.user.id} value={app.user.id}>
+                      {app.user.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   )
 }
