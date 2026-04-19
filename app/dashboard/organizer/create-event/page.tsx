@@ -18,14 +18,39 @@ export default function CreateEventPage() {
   const handleSubmit = async (e: any) => {
     e.preventDefault()
 
+    if (!form.title.trim()) {
+      alert('Title is required')
+      return
+    }
+
+    if (!form.date) {
+      alert('Please select a date')
+      return
+    }
+
+    if (!form.boothLimit || Number(form.boothLimit) <= 0) {
+      alert('Booth limit must be greater than 0')
+      return
+    }
+
+    if (Number(form.price) < 0) {
+      alert('Price cannot be negative')
+      return
+    }
+
     const organizerId = localStorage.getItem('userId')
+
+    if (!organizerId) {
+      alert('You must be logged in')
+      return
+    }
 
     const res = await fetch('/api/events/create', {
       method: 'POST',
       body: JSON.stringify({
         ...form,
-        boothLimit: Number(form.boothLimit), // 👈 FIX
-        price: Number(form.price),           // 👈 FIX
+        boothLimit: Number(form.boothLimit),
+        price: Number(form.price),
         organizerId,
       }),
     })
@@ -33,7 +58,8 @@ export default function CreateEventPage() {
     if (res.ok) {
       alert('Event created!')
     } else {
-      alert('Error creating event')
+      const error = await res.text()
+      alert(error)
     }
   }
 
