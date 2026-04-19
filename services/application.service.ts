@@ -4,12 +4,22 @@ export async function applyToEvent(data: {
   userId: string
   eventId: string
 }) {
-  return prisma.application.create({
-    data: {
+  if (!data.userId || !data.eventId) {
+    throw new Error('Invalid request')
+  }
+
+  const existing = await prisma.application.findFirst({
+    where: {
       userId: data.userId,
       eventId: data.eventId,
     },
   })
+
+  if (existing) {
+    throw new Error('You already applied to this event')
+  }
+
+  return prisma.application.create({ data })
 }
 
 export async function getApplicationsByEvent(eventId: string) {

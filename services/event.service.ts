@@ -1,3 +1,9 @@
+if (!data.title) throw new Error('Title is required')
+if (!data.date) throw new Error('Date is required')
+if (data.boothLimit <= 0) throw new Error('Invalid booth limit')
+if (data.price < 0) throw new Error('Invalid price')
+if (!data.organizerId) throw new Error('Organizer required')
+
 import { prisma } from '@/lib/prisma'
 
 export async function createEvent(data: {
