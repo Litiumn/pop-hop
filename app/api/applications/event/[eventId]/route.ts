@@ -9,7 +9,13 @@ export async function GET(req: Request, { params }: any) {
   const [applications, total] = await Promise.all([
     prisma.application.findMany({
       where: { eventId: params.eventId },
-      include: { user: true },
+      include: {
+        user: {
+          include: {
+            vendorProfile: true
+          }
+        }
+      },
       take: limit,
       skip: (page - 1) * limit,
       orderBy: { createdAt: 'desc' }
@@ -24,4 +30,4 @@ export async function GET(req: Request, { params }: any) {
     total,
     hasMore: page * limit < total
   })
-}
+}

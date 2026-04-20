@@ -31,6 +31,7 @@ model User {
   booths Booth[]
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  vendorProfile    VendorProfile?
 }
 
 model Event {
@@ -40,6 +41,11 @@ model Event {
   date        DateTime
   boothLimit  Int
   price       Float
+  address     String?
+  imageUrl    String?
+  startTime   String?
+  endTime     String?
+  durationDays Int?     @default(1)
   createdAt   DateTime @default(now())
 
   organizerId String
@@ -109,4 +115,16 @@ model Message {
   sender   User  @relation("SentMessages", fields: [senderId], references: [id])
   receiver User  @relation("ReceivedMessages", fields: [receiverId], references: [id])
   event    Event @relation(fields: [eventId], references: [id])
+}
+
+model VendorProfile {
+  id          String   @id @default(uuid())
+  description String?
+  productType String?
+  address     String?
+  socialLinks String?
+  imageUrl    String?
+
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
 }

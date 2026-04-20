@@ -7,6 +7,11 @@ export async function createEvent(data: {
   boothLimit: number
   price: number
   organizerId: string
+  address?: string
+  imageUrl?: string
+  startTime?: string
+  endTime?: string
+  durationDays?: number
 }) {
   // ✅ VALIDATION MOVED HERE
   if (!data.title) throw new Error('Title is required')
@@ -23,6 +28,11 @@ export async function createEvent(data: {
       boothLimit: data.boothLimit,
       price: data.price,
       organizerId: data.organizerId,
+      address: data.address,
+      imageUrl: data.imageUrl,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      durationDays: data.durationDays,
     },
   })
 
