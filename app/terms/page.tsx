@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
 import type { Metadata } from 'next'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'Terms of Use – Pop Hop',
@@ -100,6 +101,7 @@ export default function TermsPage() {
           </Link>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

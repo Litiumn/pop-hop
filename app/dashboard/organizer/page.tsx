@@ -110,7 +110,7 @@ export default function OrganizerDashboard() {
       </div>
 
       {/* ── EVENTS LIST ── */}
-      <div style={{ padding: '20px 16px', maxWidth: '480px', margin: '0 auto' }}>
+      <div style={{ padding: '20px 16px', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', margin: 0 }}>Your Events</h2>
           <Link href="/dashboard/organizer/create-event" className="ph-btn ph-btn-primary" style={{ fontSize: '0.8rem', padding: '7px 16px' }}>
@@ -125,7 +125,7 @@ export default function OrganizerDashboard() {
             <p style={{ fontSize: '0.85rem', opacity: 0.6 }}>Create your first flea market event!</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
             {events.map(event => {
               const approvedCount = event.applications?.filter((a: any) => a.status === 'APPROVED').length || 0
               const verifiedCount = event.applications?.filter((a: any) => a.paymentStatus === 'VERIFIED').length || 0

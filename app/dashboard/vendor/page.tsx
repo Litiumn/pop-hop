@@ -120,7 +120,7 @@ export default function VendorDashboard() {
         </div>
       )}
 
-      <div style={{ padding: '16px', maxWidth: '560px', margin: '0 auto' }}>
+      <div style={{ padding: '16px', maxWidth: '1200px', margin: '0 auto' }}>
 
         {/* Browse CTA */}
         <Link href="/dashboard/vendor/events" className="ph-card" style={{
@@ -186,7 +186,7 @@ export default function VendorDashboard() {
             {tab === 'active' && <Link href="/dashboard/vendor/events" className="ph-btn ph-btn-primary">Browse Events</Link>}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
             {displayed.map(app => {
               const PayIcon = PAYMENT_ICON[app.paymentStatus] || CreditCard
               return (

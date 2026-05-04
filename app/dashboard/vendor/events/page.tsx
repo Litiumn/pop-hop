@@ -60,7 +60,7 @@ export default function VendorEventsPage() {
       </div>
 
       {/* Event cards */}
-      <div style={{ padding: '16px', maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ padding: '16px', maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
         {events.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--text-muted)' }}>
             <CalendarRange size={48} strokeWidth={1.5} style={{ opacity: 0.3, margin: '0 auto 12px' }} />

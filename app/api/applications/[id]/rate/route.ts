@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { getUserFromServer } from '@/lib/auth-server'
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getUserFromServer()
     if (!user || user.role !== 'ORGANIZER') {
@@ -13,9 +13,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       return new Response('Invalid rating', { status: 400 })
     }
 
+    const { id } = await params
+
     // Ensure the user is the organizer of the event this application belongs to
     const application = await prisma.application.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { event: true }
     })
 
@@ -24,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
 
     const updated = await prisma.application.update({
-      where: { id: params.id },
+      where: { id },
       data: { organizerRating: rating, organizerFeedback: feedback }
     })
 

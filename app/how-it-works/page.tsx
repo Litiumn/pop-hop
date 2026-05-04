@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CheckCircle, MapPin, Store, MessageCircle, HeartHandshake } from 'lucide-react'
+import Footer from '@/components/Footer'
 
 export const metadata = {
   title: 'How It Works – Pop Hop',
@@ -98,6 +99,7 @@ export default function HowItWorksPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

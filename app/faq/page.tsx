@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { HelpCircle, ChevronDown } from 'lucide-react'
 import type { Metadata } from 'next'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'FAQ – Pop Hop',
@@ -200,6 +201,7 @@ export default function FAQPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }
