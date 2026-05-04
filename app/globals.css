@@ -13,23 +13,25 @@
   --ph-orange:   #FF6B2C;
   --ph-blue:     #7EC8E3;
   --ph-lavender: #C9B8FF;
-  --ph-black:    #0D0D0D;
+  --ph-black:    #3d3d3d;
   --ph-white:    #FAFAF5;
 
-  /* Semantic (60-30-10 rule) */
-  --background:  var(--ph-white);   /* 60%: Light page background */
-  --surface:     #FFFFFF;    /* Card/surface white */
+  /* Semantic (60-30-10 rule) – Light Mode defaults */
+  --background:  var(--ph-white);
+  --surface:     #FFFFFF;
   --foreground:  var(--ph-black);
-  /* Accents (30%): ph-yellow, ph-magenta, ph-green, ph-blue, ph-orange */
-  /* Details (10%): ph-black for outlines and strong contrasts */
+  --surface-alt: rgba(0,0,0,0.04);
+  --border-color-soft: rgba(0,0,0,0.12);
+  --text-muted:  rgba(13,13,13,0.55);
+  --card-bg:     var(--ph-white);
 
   /* Typography */
-  --font-display: 'Syne', sans-serif;
-  --font-body:    'Space Grotesk', sans-serif;
+  --font-display:   'Syne', sans-serif;
+  --font-body:      'Space Grotesk', sans-serif;
+  --font-readable:  'Atkinson Hyperlegible', sans-serif;
 
   /* Borders */
   --border-width: 2.5px;
-  --border-color: var(--ph-black);
   --radius-sm:    8px;
   --radius-md:    14px;
   --radius-lg:    20px;
@@ -42,6 +44,52 @@
 }
 
 /* =============================================
+   DARK MODE
+   ============================================= */
+[data-theme="dark"] {
+  --background:        #111111;
+  --surface:           #1A1A1A;
+  --foreground:        #F0EFE8;
+  --surface-alt:       rgba(255,255,255,0.06);
+  --border-color-soft: rgba(255,255,255,0.12);
+  --text-muted:        rgba(240,239,232,0.55);
+  --card-bg:           #1E1E1E;
+  --ph-black:          #F0EFE8;   /* flip black→cream for borders/text */
+  --ph-white:          #1E1E1E;   /* flip white→dark for card surfaces */
+
+  /* keep brand colors vibrant in dark mode */
+  --ph-yellow:   #FFE034;
+  --ph-green:    #3DDA55;
+  --ph-magenta:  #E8186D;
+  --ph-orange:   #FF6B2C;
+  --ph-blue:     #7EC8E3;
+  --ph-lavender: #C9B8FF;
+
+  /* dark mode shadows use a lighter glow */
+  --shadow-sm:  3px 3px 0 rgba(240,239,232,0.35);
+  --shadow-md:  4px 4px 0 rgba(240,239,232,0.35);
+  --shadow-lg:  6px 6px 0 rgba(240,239,232,0.35);
+}
+
+/* =============================================
+   ACCESSIBLE / READABLE FONT MODE
+   ============================================= */
+[data-font="readable"] {
+  --font-body: 'Atkinson Hyperlegible', sans-serif;
+}
+[data-font="readable"] body,
+[data-font="readable"] p,
+[data-font="readable"] span,
+[data-font="readable"] a,
+[data-font="readable"] button,
+[data-font="readable"] input,
+[data-font="readable"] label {
+  font-family: var(--font-readable) !important;
+  letter-spacing: 0.01em;
+  line-height: 1.65;
+}
+
+/* =============================================
    BASE
    ============================================= */
 *, *::before, *::after { box-sizing: border-box; }
@@ -50,10 +98,11 @@ html, body {
   margin: 0;
   padding: 0;
   background-color: var(--background);
-  color: var(--ph-black);
+  color: var(--foreground);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 h1, h2, h3, h4 {
@@ -63,12 +112,49 @@ h1, h2, h3, h4 {
 }
 
 /* =============================================
+   RESPONSIVE HELPERS
+   ============================================= */
+
+/* Horizontal on tablet+ */
+.ph-row-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .ph-row-sm {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+/* Cards side-by-side on tablet+ */
+.ph-cards-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .ph-cards-row {
+    flex-direction: row;
+    max-width: 900px;
+  }
+  .ph-cards-row > * {
+    flex: 1;
+  }
+}
+
+/* =============================================
    COMPONENTS
    ============================================= */
 
 /* --- POP CARD --- */
 .ph-card {
-  background: var(--ph-white);
+  background: var(--card-bg);
   border: var(--border-width) solid var(--ph-black);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
@@ -103,9 +189,9 @@ h1, h2, h3, h4 {
 }
 
 .ph-btn-primary   { background: var(--ph-green);   color: var(--ph-black); }
-.ph-btn-secondary { background: var(--ph-magenta); color: var(--ph-white); }
-.ph-btn-accent    { background: var(--ph-orange);  color: var(--ph-white); }
-.ph-btn-ghost     { background: var(--ph-white);   color: var(--ph-black); }
+.ph-btn-secondary { background: var(--ph-magenta); color: #FAFAF5; }
+.ph-btn-accent    { background: var(--ph-orange);  color: #FAFAF5; }
+.ph-btn-ghost     { background: var(--surface);    color: var(--foreground); border-color: var(--ph-black); }
 
 .ph-btn:hover { transform: translate(-1px, -1px); box-shadow: var(--shadow-md); }
 
@@ -121,10 +207,10 @@ h1, h2, h3, h4 {
   text-transform: uppercase;
 }
 .ph-badge-green   { background: var(--ph-green);   color: var(--ph-black); }
-.ph-badge-magenta { background: var(--ph-magenta); color: var(--ph-white); }
+.ph-badge-magenta { background: var(--ph-magenta); color: #FAFAF5; }
 .ph-badge-blue    { background: var(--ph-blue);    color: var(--ph-black); }
 .ph-badge-yellow  { background: var(--ph-yellow);  color: var(--ph-black); }
-.ph-badge-orange  { background: var(--ph-orange);  color: var(--ph-white); }
+.ph-badge-orange  { background: var(--ph-orange);  color: #FAFAF5; }
 .ph-badge-lavender{ background: var(--ph-lavender);color: var(--ph-black); }
 
 /* --- LOGO PILL --- */
@@ -148,7 +234,8 @@ h1, h2, h3, h4 {
   padding: 10px 14px;
   border: var(--border-width) solid var(--ph-black);
   border-radius: var(--radius-sm);
-  background: var(--ph-white);
+  background: var(--surface);
+  color: var(--foreground);
   font-family: var(--font-body);
   font-size: 0.95rem;
   outline: none;
@@ -167,7 +254,7 @@ h1, h2, h3, h4 {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin-bottom: 6px;
-  color: var(--ph-black);
+  color: var(--foreground);
 }
 
 /* --- SECTION --- */
@@ -204,7 +291,7 @@ h1, h2, h3, h4 {
 
 /* --- STAT CARD --- */
 .ph-stat-card {
-  background: var(--ph-white);
+  background: var(--surface);
   border: var(--border-width) solid var(--ph-black);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
@@ -243,3 +330,37 @@ h1, h2, h3, h4 {
 
 /* --- MOBILE SAFE AREA --- */
 .ph-bottom-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+
+/* --- THEME TOGGLE BUTTON --- */
+.ph-theme-toggle-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 2px solid var(--ph-black);
+  border-radius: var(--radius-pill);
+  padding: 3px 4px;
+  box-shadow: var(--shadow-sm);
+}
+.ph-theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.12s ease;
+  background: transparent;
+  color: var(--foreground);
+}
+.ph-theme-toggle-btn.active {
+  background: var(--ph-black);
+  color: var(--background);
+}
+.ph-theme-toggle-btn:hover:not(.active) {
+  background: var(--surface-alt);
+}

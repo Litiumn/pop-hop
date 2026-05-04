@@ -33,6 +33,7 @@ model User {
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
   vendorProfile    VendorProfile?
+  collaboratedEvents Event[] @relation("EventCollaborators")
 }
 
 enum EventStatus {
@@ -63,6 +64,7 @@ model Event {
   booths Booth[]
   announcements Announcement[]
   messages Message[]
+  collaborators User[] @relation("EventCollaborators")
 }
 
 model Application {
@@ -81,6 +83,9 @@ model Application {
 
   paymentProof String?      // image URL
   paymentStatus String @default("UNPAID") // UNPAID | PENDING | VERIFIED | REJECTED
+
+  organizerRating Int?
+  organizerFeedback String?
 
   @@unique([userId, eventId])
 }

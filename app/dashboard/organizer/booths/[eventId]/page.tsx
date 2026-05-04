@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { Store, User, ArrowLeft, Loader2, Check } from 'lucide-react'
 
 type Booth = {
   id: string
@@ -27,6 +28,8 @@ export default function BoothGridPage() {
   const [assigning, setAssigning] = useState(false)
   const [loading, setLoading] = useState(true)
   const [eventTitle, setEventTitle] = useState('')
+  const [draggedVendor, setDraggedVendor] = useState<string | null>(null)
+  const [dragTarget, setDragTarget] = useState<string | null>(null)
 
   const fetchData = async () => {
     const [boothsRes, appsRes] = await Promise.all([
@@ -40,7 +43,6 @@ export default function BoothGridPage() {
 
   useEffect(() => {
     fetchData()
-    // Also fetch event name for context
     fetch('/api/events/organizer')
       .then(r => r.json())
       .then((events: any[]) => {
@@ -71,15 +73,14 @@ export default function BoothGridPage() {
 
   const getBoothState = (booth: Booth): 'empty' | 'assigned' | 'pending' => {
     if (booth.vendorId) return 'assigned'
-    // Has any pending application without a booth?
     if (pendingApps.length > 0) return 'pending'
     return 'empty'
   }
 
   const boothColors = {
-    empty:    { bg: '#3DDA55', border: '#0D0D0D', label: '#0D0D0D', shadow: '3px 3px 0 #0D0D0D' },
-    assigned: { bg: '#E8186D', border: '#0D0D0D', label: 'white',   shadow: '3px 3px 0 #0D0D0D' },
-    pending:  { bg: '#FFE034', border: '#0D0D0D', label: '#0D0D0D', shadow: '3px 3px 0 #0D0D0D' },
+    empty:    { bg: 'var(--ph-green)',   border: 'var(--ph-black)', label: 'var(--ph-black)' },
+    assigned: { bg: 'var(--ph-magenta)', border: 'var(--ph-black)', label: 'white' },
+    pending:  { bg: 'var(--ph-yellow)',  border: 'var(--ph-black)', label: 'var(--ph-black)' },
   }
 
   const stats = {
@@ -88,13 +89,39 @@ export default function BoothGridPage() {
     empty:    booths.filter(b => !b.vendorId).length,
   }
 
+  const handleDragStart = (e: React.DragEvent, vendorId: string) => {
+    setDraggedVendor(vendorId)
+    e.dataTransfer.setData('text/plain', vendorId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent, boothId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragTarget !== boothId) setDragTarget(boothId)
+  }
+
+  const handleDragLeave = () => {
+    setDragTarget(null)
+  }
+
+  const handleDrop = async (e: React.DragEvent, boothId: string) => {
+    e.preventDefault()
+    setDragTarget(null)
+    const vendorId = e.dataTransfer.getData('text/plain')
+    if (vendorId && boothId) {
+      await assign(boothId, vendorId)
+    }
+    setDraggedVendor(null)
+  }
+
   return (
-    <div style={{ background: 'var(--ph-yellow)', minHeight: '100dvh', paddingBottom: '60px' }}>
+    <div style={{ background: 'var(--background)', minHeight: '100dvh', paddingBottom: '60px', color: 'var(--foreground)' }}>
 
       {/* ── HEADER ── */}
       <div style={{
         background: 'var(--ph-black)',
-        padding: '20px 16px',
+        padding: '24px 16px 20px',
         borderBottom: '2.5px solid var(--ph-black)',
         display: 'flex',
         alignItems: 'center',
@@ -104,158 +131,190 @@ export default function BoothGridPage() {
           <p style={{ color: 'var(--ph-yellow)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px' }}>
             Booth Grid
           </p>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.3rem', color: 'white', margin: 0 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', color: 'white', margin: 0 }}>
             {eventTitle || 'Event Booths'}
           </h1>
         </div>
-        <button onClick={() => router.back()} className="ph-btn ph-btn-ghost" style={{ fontSize: '0.75rem', padding: '6px 14px' }}>
-          ← Back
+        <button onClick={() => router.back()} className="ph-btn ph-btn-ghost" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+          <ArrowLeft size={14} /> Back
         </button>
       </div>
 
-      {/* ── LEGEND + STATS ── */}
-      <div style={{ padding: '16px 16px 0', maxWidth: '600px', margin: '0 auto' }}>
-        {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
-          {[
-            { label: 'Total Booths', value: stats.total, color: 'var(--ph-black)' },
-            { label: 'Assigned', value: stats.assigned, color: 'var(--ph-magenta)' },
-            { label: 'Available', value: stats.empty, color: 'var(--ph-green)' },
-          ].map(s => (
-            <div key={s.label} className="ph-card" style={{ padding: '12px', textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.6 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Legend */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Legend:</span>
-          {[
-            { color: '#3DDA55', label: 'Empty' },
-            { color: '#E8186D', label: 'Assigned' },
-            { color: '#FFE034', label: 'Pending' },
-          ].map(l => (
-            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{
-                width: '18px', height: '18px', borderRadius: '4px',
-                background: l.color, border: '2px solid #0D0D0D',
-                boxShadow: '2px 2px 0 #0D0D0D',
-              }} />
-              <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>{l.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── BOOTH GRID ── */}
-      <div style={{ padding: '0 16px', maxWidth: '600px', margin: '0 auto' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px', fontSize: '2rem' }}>🏪</div>
-        ) : booths.length === 0 ? (
-          <div className="ph-card" style={{ padding: '32px', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🏗️</div>
-            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem' }}>No booths created yet</p>
-            <p style={{ fontSize: '0.85rem', opacity: 0.6 }}>Booths are auto-created based on your event's booth limit.</p>
-          </div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-            gap: '12px',
-          }}>
-            {booths.map(booth => {
-              const state = booth.vendorId ? 'assigned' : 'empty'
-              const colors = boothColors[state]
-              return (
-                <button
-                  key={booth.id}
-                  onClick={() => setSelected(booth)}
-                  style={{
-                    background: colors.bg,
-                    border: `2.5px solid ${colors.border}`,
-                    borderRadius: '12px',
-                    boxShadow: colors.shadow,
-                    padding: '12px 8px',
-                    cursor: 'pointer',
-                    transition: 'transform 0.12s, box-shadow 0.12s',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '4px',
-                    minHeight: '80px',
-                    justifyContent: 'center',
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLButtonElement).style.transform = 'translate(-2px, -2px)'
-                    ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '5px 5px 0 #0D0D0D'
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLButtonElement).style.transform = 'translate(0, 0)'
-                    ;(e.currentTarget as HTMLButtonElement).style.boxShadow = colors.shadow
-                  }}
-                >
-                  <span style={{ fontSize: '1.2rem' }}>
-                    {booth.vendorId ? '🏪' : '📦'}
-                  </span>
-                  <span style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
-                    color: colors.label,
-                  }}>
-                    #{booth.number}
-                  </span>
-                  {booth.vendor && (
-                    <span style={{
-                      fontSize: '0.6rem',
-                      fontWeight: 700,
-                      color: colors.label,
-                      opacity: 0.8,
-                      maxWidth: '68px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      textAlign: 'center',
-                    }}>
-                      {booth.vendor.name.split(' ')[0]}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── WAITLIST SECTION ── */}
-      {waitlistedApps.length > 0 && (
-        <div style={{ padding: '20px 16px 0', maxWidth: '600px', margin: '0 auto' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', marginBottom: '10px' }}>
-            ⏳ Waitlist ({waitlistedApps.length})
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {waitlistedApps.map((app, i) => (
-              <div key={app.id} className="ph-card" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{
-                  fontFamily: 'var(--font-display)', fontWeight: 800,
-                  fontSize: '0.7rem', background: 'var(--ph-yellow)',
-                  border: '2px solid var(--ph-black)', borderRadius: '999px',
-                  padding: '2px 8px',
-                }}>#{i + 1}</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 700, fontSize: '0.85rem', margin: 0 }}>{app.user.name}</p>
-                  {app.user.vendorProfile?.productType && (
-                    <p style={{ fontSize: '0.75rem', opacity: 0.6, margin: 0 }}>{app.user.vendorProfile.productType}</p>
-                  )}
-                </div>
-                <span className="ph-badge ph-badge-yellow">WAITLIST</span>
+      <div style={{ padding: '20px 16px', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }} className="md:flex-row">
+        
+        {/* LEFT PANEL: Vendors & Stats */}
+        <div style={{ flex: '0 0 320px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+            {[
+              { label: 'Total Booths', value: stats.total, color: 'var(--foreground)' },
+              { label: 'Assigned', value: stats.assigned, color: 'var(--ph-magenta)' },
+              { label: 'Available', value: stats.empty, color: 'var(--ph-green)' },
+            ].map(s => (
+              <div key={s.label} className="ph-card" style={{ padding: '12px', textAlign: 'center', background: 'var(--surface)' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.4rem', color: s.color }}>{s.value}</div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.6 }}>{s.label}</div>
               </div>
             ))}
           </div>
+
+          {/* Unassigned Vendors (Draggable) */}
+          <div className="ph-card" style={{ background: 'var(--surface)', padding: '16px' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <User size={18} /> Unassigned Vendors
+            </h2>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
+              Drag an approved vendor and drop them onto an empty booth.
+            </p>
+
+            {approvedVendors.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <Check size={24} style={{ opacity: 0.3, margin: '0 auto 8px' }} />
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0 }}>All approved vendors assigned!</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+                {approvedVendors.map(app => (
+                  <div
+                    key={app.userId}
+                    draggable
+                    onDragStart={e => handleDragStart(e, app.userId)}
+                    onDragEnd={() => setDraggedVendor(null)}
+                    style={{
+                      padding: '10px 12px',
+                      background: 'var(--surface-alt)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '8px',
+                      cursor: 'grab',
+                      opacity: draggedVendor === app.userId ? 0.5 : 1,
+                      transform: draggedVendor === app.userId ? 'scale(0.98)' : 'none',
+                      transition: 'transform 0.1s',
+                    }}
+                  >
+                    <p style={{ fontWeight: 800, fontSize: '0.9rem', margin: '0 0 2px' }}>{app.user.name}</p>
+                    {app.user.vendorProfile?.productType && (
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>{app.user.vendorProfile.productType}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Waitlist */}
+          {waitlistedApps.length > 0 && (
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', marginBottom: '8px' }}>
+                ⏳ Waitlist ({waitlistedApps.length})
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {waitlistedApps.map((app, i) => (
+                  <div key={app.id} className="ph-card" style={{ background: 'var(--surface)', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.7rem', background: 'var(--ph-yellow)', color: 'var(--ph-black)', border: '1.5px solid var(--ph-black)', borderRadius: '999px', padding: '2px 8px' }}>#{i + 1}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 700, fontSize: '0.85rem', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.user.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* RIGHT PANEL: Booth Grid */}
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Legend:</span>
+            {[
+              { color: 'var(--ph-green)', label: 'Empty' },
+              { color: 'var(--ph-magenta)', label: 'Assigned' },
+              { color: 'var(--ph-yellow)', label: 'Pending' },
+            ].map(l => (
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: l.color, border: '1.5px solid var(--ph-black)' }} />
+                <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{l.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
+              <Loader2 size={32} className="animate-spin mx-auto mb-4" />
+              <p>Loading booths...</p>
+            </div>
+          ) : booths.length === 0 ? (
+            <div className="ph-card" style={{ padding: '32px', textAlign: 'center', background: 'var(--surface)' }}>
+              <Store size={40} strokeWidth={1.5} style={{ opacity: 0.3, margin: '0 auto 12px' }} />
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem' }}>No booths created yet</p>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+              gap: '12px',
+            }}>
+              {booths.map(booth => {
+                const state = getBoothState(booth)
+                const colors = boothColors[state]
+                const isDragTarget = dragTarget === booth.id && !booth.vendorId
+
+                return (
+                  <div
+                    key={booth.id}
+                    onClick={() => setSelected(booth)}
+                    onDragOver={(e) => !booth.vendorId && handleDragOver(e, booth.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => !booth.vendorId && handleDrop(e, booth.id)}
+                    style={{
+                      background: isDragTarget ? 'var(--ph-yellow)' : colors.bg,
+                      border: `2.5px solid ${isDragTarget ? 'var(--ph-black)' : colors.border}`,
+                      borderRadius: '12px',
+                      boxShadow: isDragTarget ? 'none' : `3px 3px 0 ${colors.border}`,
+                      padding: '12px 8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.12s',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                      minHeight: '80px',
+                      justifyContent: 'center',
+                      transform: isDragTarget ? 'scale(1.05)' : 'none',
+                    }}
+                  >
+                    <span style={{ color: isDragTarget ? 'var(--ph-black)' : colors.label, marginBottom: '2px' }}>
+                      {booth.vendorId ? <Store size={20} strokeWidth={2.5} /> : <Store size={20} />}
+                    </span>
+                    <span style={{
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      color: isDragTarget ? 'var(--ph-black)' : colors.label,
+                    }}>
+                      #{booth.number}
+                    </span>
+                    {booth.vendor && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        color: colors.label,
+                        opacity: 0.9,
+                        maxWidth: '68px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        textAlign: 'center',
+                      }}>
+                        {booth.vendor.name.split(' ')[0]}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ── BOOTH DETAIL MODAL ── */}
       {selected && (
@@ -272,7 +331,7 @@ export default function BoothGridPage() {
           <div style={{
             position: 'fixed',
             bottom: 0, left: 0, right: 0,
-            background: 'var(--ph-white)',
+            background: 'var(--surface)',
             borderRadius: '20px 20px 0 0',
             border: '2.5px solid var(--ph-black)',
             borderBottom: 'none',
@@ -283,11 +342,11 @@ export default function BoothGridPage() {
           }}>
             {/* Drag handle */}
             <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-              <div style={{ width: '36px', height: '4px', background: '#D0D0D0', borderRadius: '999px' }} />
+              <div style={{ width: '36px', height: '4px', background: 'var(--border-color)', borderRadius: '999px' }} />
             </div>
 
-            <div style={{ padding: '16px 20px 32px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <div style={{ padding: '16px 20px 32px', maxWidth: '600px', margin: '0 auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
                 <div>
                   <p style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.5, margin: '0 0 4px' }}>
                     {selected.vendorId ? 'Assigned Booth' : 'Empty Booth'}
@@ -303,27 +362,28 @@ export default function BoothGridPage() {
                   borderRadius: '12px',
                   boxShadow: '3px 3px 0 var(--ph-black)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '1.6rem',
+                  color: selected.vendorId ? 'white' : 'var(--ph-black)'
                 }}>
-                  {selected.vendorId ? '🏪' : '📦'}
+                  <Store size={24} strokeWidth={selected.vendorId ? 2.5 : 2} />
                 </div>
               </div>
 
               {selected.vendorId ? (
                 /* Already assigned */
                 <div style={{
-                  background: 'rgba(232,24,109,0.08)',
-                  border: '2px solid var(--ph-magenta)',
+                  background: 'var(--ph-lavender)',
+                  border: '2px solid var(--ph-black)',
                   borderRadius: '12px',
                   padding: '16px',
+                  color: 'var(--ph-black)',
                 }}>
-                  <p style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.5, margin: '0 0 6px' }}>Assigned To</p>
-                  <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', margin: 0 }}>
-                    {selected.vendor?.name}
+                  <p style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7, margin: '0 0 6px' }}>Assigned To</p>
+                  <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <User size={16} /> {selected.vendor?.name}
                   </p>
                 </div>
               ) : (
-                /* Assign vendor */
+                /* Assign vendor (fallback if drag/drop isn't used) */
                 <div>
                   <p style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '12px' }}>
                     Assign an approved vendor to this booth:
@@ -331,17 +391,14 @@ export default function BoothGridPage() {
 
                   {approvedVendors.length === 0 ? (
                     <div style={{
-                      background: 'rgba(0,0,0,0.04)',
-                      border: '2px dashed rgba(0,0,0,0.2)',
+                      background: 'var(--surface-alt)',
+                      border: '2px dashed var(--border-color)',
                       borderRadius: '12px',
                       padding: '24px',
                       textAlign: 'center',
                     }}>
-                      <p style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🚫</p>
+                      <Store size={32} style={{ opacity: 0.2, margin: '0 auto 8px' }} />
                       <p style={{ fontWeight: 700, margin: 0 }}>No approved vendors available</p>
-                      <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: '4px 0 0' }}>
-                        Approve applications first to assign them a booth.
-                      </p>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -351,28 +408,18 @@ export default function BoothGridPage() {
                           disabled={assigning}
                           onClick={() => assign(selected.id, app.userId)}
                           style={{
-                            background: 'var(--ph-white)',
+                            background: 'var(--surface)',
                             border: '2.5px solid var(--ph-black)',
                             borderRadius: '12px',
                             boxShadow: '3px 3px 0 var(--ph-black)',
                             padding: '14px 16px',
                             textAlign: 'left',
                             cursor: assigning ? 'not-allowed' : 'pointer',
-                            transition: 'transform 0.1s, box-shadow 0.1s',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             opacity: assigning ? 0.6 : 1,
-                          }}
-                          onMouseEnter={e => {
-                            if (!assigning) {
-                              (e.currentTarget as HTMLButtonElement).style.transform = 'translate(-2px, -2px)'
-                              ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '5px 5px 0 var(--ph-black)'
-                            }
-                          }}
-                          onMouseLeave={e => {
-                            (e.currentTarget as HTMLButtonElement).style.transform = 'translate(0,0)'
-                            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '3px 3px 0 var(--ph-black)'
+                            color: 'var(--foreground)'
                           }}
                         >
                           <div>
@@ -387,13 +434,17 @@ export default function BoothGridPage() {
                           </div>
                           <span style={{
                             background: 'var(--ph-green)',
+                            color: 'var(--ph-black)',
                             border: '2px solid var(--ph-black)',
                             borderRadius: '999px',
                             padding: '4px 12px',
                             fontSize: '0.72rem',
                             fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
                           }}>
-                            {assigning ? '...' : 'Assign →'}
+                            {assigning ? <Loader2 size={12} className="animate-spin" /> : <><Check size={12} /> Assign</>}
                           </span>
                         </button>
                       ))}
@@ -414,6 +465,9 @@ export default function BoothGridPage() {
         @keyframes ph-fade-in {
           from { opacity: 0; }
           to   { opacity: 1; }
+        }
+        @media (min-width: 768px) {
+          .md\\:flex-row { flex-direction: row !important; }
         }
       `}</style>
     </div>

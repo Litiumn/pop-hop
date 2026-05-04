@@ -1,11 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import {
+  MessageCircle, ChevronDown, ChevronUp, CheckCircle,
+  XCircle, Check, X, CreditCard, ArrowLeft
+} from 'lucide-react'
 
 export default function ApplicationsPage() {
   const { eventId } = useParams()
+  const router = useRouter()
   const [applications, setApplications] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
@@ -27,7 +32,6 @@ export default function ApplicationsPage() {
       body: JSON.stringify({ status }),
     })
     if (res.ok) {
-      alert(`Application ${status}`)
       location.reload()
     }
   }
@@ -38,162 +42,263 @@ export default function ApplicationsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ applicationId: id, status })
     })
-    alert(`Payment ${status}`)
+    location.reload()
+  }
+
+  const rateVendor = async (id: string, rating: number, feedback: string) => {
+    await fetch(`/api/applications/${id}/rate`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating, feedback })
+    })
     location.reload()
   }
 
   return (
-    <div className=" min-h-screen">
-      <div className="max-w-5xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-4">Applications</h1>
+    <div style={{ background: 'var(--background)', minHeight: '100dvh', paddingBottom: '60px', color: 'var(--foreground)' }}>
 
-        <div className="grid gap-4">
-          {applications.map(app => {
-            const profile = app.user?.vendorProfile
-            const isExpanded = expanded === app.id
+      {/* ── HEADER ── */}
+      <div style={{
+        background: 'var(--ph-black)',
+        padding: '24px 16px 20px',
+        borderBottom: '2.5px solid var(--ph-black)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <div>
+          <p style={{ color: 'var(--ph-green)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
+            Organizer
+          </p>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', color: 'var(--ph-white)', margin: 0 }}>
+            Applications
+          </h1>
+        </div>
+        <button onClick={() => router.back()} className="ph-btn ph-btn-ghost" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+          <ArrowLeft size={14} /> Back
+        </button>
+      </div>
 
-            return (
-              <div key={app.id} className="bg-white p-4 rounded-lg shadow">
+      <div style={{ padding: '20px 16px', maxWidth: '600px', margin: '0 auto' }}>
 
-                {/* TOP ROW */}
-                <div className="flex justify-between items-start gap-4">
+        {applications.length === 0 ? (
+          <div className="ph-card" style={{ padding: '32px', textAlign: 'center', background: 'var(--surface)' }}>
+            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.1rem', marginBottom: '8px' }}>No applications yet</p>
+            <p style={{ fontSize: '0.85rem', opacity: 0.6 }}>When vendors apply, they will appear here.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {applications.map(app => {
+              const profile = app.user?.vendorProfile
+              const isExpanded = expanded === app.id
+              const canRate = app.status === 'APPROVED' && !app.organizerRating
 
-                  {/* LEFT: Vendor Info */}
-                  <div className="flex gap-3 items-start flex-1">
-                    {/* Profile image */}
-                    {profile?.imageUrl ? (
-                      <img src={profile.imageUrl} alt={app.user.name}
-                        className="w-12 h-12 rounded-full object-cover border border-gray-200 flex-shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                        <span className="text-lg text-gray-500 font-bold">
-                          {app.user.name?.[0]?.toUpperCase()}
-                        </span>
+              return (
+                <div key={app.id} className="ph-card" style={{ background: 'var(--surface)', padding: '16px' }}>
+
+                  {/* TOP ROW */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+
+                    {/* LEFT: Vendor Info */}
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', flex: 1 }}>
+                      {/* Profile image */}
+                      {profile?.imageUrl ? (
+                        <img src={profile.imageUrl} alt={app.user.name}
+                          style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)', flexShrink: 0 }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                      ) : (
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--surface-alt)', border: '2px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-muted)' }}>
+                            {app.user.name?.[0]?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+
+                      <div>
+                        <p style={{ fontWeight: 800, fontSize: '1.1rem', margin: '0 0 2px' }}>{app.user.name}</p>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{app.user.email}</p>
+                        
+                        {/* Tags */}
+                        {profile?.productType && (
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
+                            {profile.productType.split(',').map((tag: string) => (
+                              <span key={tag.trim()} style={{ background: 'var(--ph-lavender)', color: 'var(--ph-black)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                                {tag.trim()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Status:</span>
+                          <span style={{
+                            fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', padding: '2px 8px', borderRadius: '999px',
+                            background: app.status === 'APPROVED' ? 'var(--ph-green)' : app.status === 'REJECTED' ? 'var(--ph-magenta)' : 'var(--ph-yellow)',
+                            color: app.status === 'REJECTED' ? 'white' : 'var(--ph-black)'
+                          }}>
+                            {app.status}
+                          </span>
+                        </div>
+
+                        {profile && (
+                          <button
+                            onClick={() => setExpanded(isExpanded ? null : app.id)}
+                            style={{
+                              background: 'none', border: 'none', padding: 0, marginTop: '8px',
+                              fontSize: '0.75rem', fontWeight: 700, color: 'var(--ph-blue)', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', gap: '4px'
+                            }}
+                          >
+                            {isExpanded ? <><ChevronUp size={12} /> Hide Details</> : <><ChevronDown size={12} /> View Vendor Details</>}
+                          </button>
+                        )}
                       </div>
-                    )}
+                    </div>
 
-                    <div>
-                      <p className="font-semibold text-gray-800">{app.user.name}</p>
-                      <p className="text-sm text-gray-500">{app.user.email}</p>
-                      {profile?.productType && (
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded mt-1 inline-block">
-                          {profile.productType}
-                        </span>
+                    {/* RIGHT: Actions */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0, alignItems: 'flex-end' }}>
+                      {app.status === 'PENDING' && (
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button onClick={() => updateStatus(app.id, 'APPROVED')} className="ph-btn ph-btn-primary" style={{ padding: '6px 10px', fontSize: '0.75rem', minWidth: 'auto' }}>
+                            <Check size={14} /> Approve
+                          </button>
+                          <button onClick={() => updateStatus(app.id, 'REJECTED')} className="ph-btn ph-btn-secondary" style={{ padding: '6px 10px', fontSize: '0.75rem', minWidth: 'auto', background: 'var(--ph-magenta)', color: 'white' }}>
+                            <X size={14} /> Reject
+                          </button>
+                        </div>
                       )}
-
-                      {/* Application status */}
-                      <p className="text-sm mt-1">
-                        Status:{' '}
-                        <span className={
-                          app.status === 'APPROVED' ? 'text-green-600 font-medium' :
-                          app.status === 'REJECTED' ? 'text-red-600 font-medium' :
-                          'text-gray-600'
-                        }>
-                          {app.status}
-                        </span>
-                      </p>
-
-                      {/* Toggle profile details */}
-                      {profile && (
-                        <button
-                          onClick={() => setExpanded(isExpanded ? null : app.id)}
-                          className="text-xs text-blue-500 hover:underline mt-1"
-                        >
-                          {isExpanded ? 'Hide Details ▲' : 'View Vendor Details ▼'}
-                        </button>
-                      )}
+                      <Link href={`/dashboard/chat/${eventId}/${app.userId}`} className="ph-btn ph-btn-ghost" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
+                        <MessageCircle size={14} /> Chat
+                      </Link>
                     </div>
                   </div>
 
-                  {/* RIGHT: Action buttons */}
-                  <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                    {app.status === 'PENDING' && (
-                      <div className="flex gap-2">
-                        <button onClick={() => updateStatus(app.id, 'APPROVED')}
-                          className="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded">
-                          Approve
-                        </button>
-                        <button onClick={() => updateStatus(app.id, 'REJECTED')}
-                          className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded">
-                          Reject
-                        </button>
+                  {/* EXPANDED: Vendor Profile Details */}
+                  {isExpanded && profile && (
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1.5px solid var(--border-color-soft)', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                      {profile.description && (
+                        <div>
+                          <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 4px' }}>About</p>
+                          <p style={{ fontSize: '0.85rem', margin: 0, lineHeight: 1.5 }}>{profile.description}</p>
+                        </div>
+                      )}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {profile.address && (
+                          <div>
+                            <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 4px' }}>Address</p>
+                            <p style={{ fontSize: '0.85rem', margin: 0 }}>📍 {profile.address}</p>
+                          </div>
+                        )}
+                        {profile.socialLinks && (
+                          <div>
+                            <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 4px' }}>Social Media</p>
+                            <p style={{ fontSize: '0.85rem', margin: 0, whiteSpace: 'pre-line' }}>{profile.socialLinks}</p>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    <Link href={`/dashboard/chat/${eventId}/${app.userId}`}
-                      className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm px-3 py-1 rounded text-center">
-                      💬 Chat
-                    </Link>
-                  </div>
+                    </div>
+                  )}
+
+                  {/* PAYMENT SECTION */}
+                  {app.paymentProof && (
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1.5px solid var(--border-color-soft)' }}>
+                      <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CreditCard size={12} /> Payment Proof
+                      </p>
+                      
+                      {/* Image Preview */}
+                      <a href={app.paymentProof} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginBottom: '12px' }}>
+                        <img src={app.paymentProof} alt="Payment Proof" style={{ width: '100%', maxWidth: '240px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '2px solid var(--ph-black)' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                      </a>
+
+                      {app.paymentStatus === 'PENDING' && (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => verifyPayment(app.id, 'VERIFIED')} className="ph-btn ph-btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem', minWidth: 'auto' }}>
+                            <CheckCircle size={14} /> Verify
+                          </button>
+                          <button onClick={() => verifyPayment(app.id, 'REJECTED')} className="ph-btn ph-btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem', minWidth: 'auto', background: 'var(--ph-magenta)', color: 'white' }}>
+                            <XCircle size={14} /> Reject
+                          </button>
+                        </div>
+                      )}
+                      {app.paymentStatus === 'VERIFIED' && (
+                        <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ph-green)', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <CheckCircle size={14} /> Payment verified
+                        </p>
+                      )}
+                      {app.paymentStatus === 'REJECTED' && (
+                        <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ph-magenta)', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <XCircle size={14} /> Payment rejected
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* VENDOR RATING SECTION */}
+                  {app.organizerRating ? (
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1.5px solid var(--border-color-soft)' }}>
+                      <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 4px' }}>Your Feedback</p>
+                      <p style={{ margin: '0 0 4px', color: 'var(--ph-orange)' }}>{'★'.repeat(app.organizerRating)}{'☆'.repeat(5 - app.organizerRating)}</p>
+                      {app.organizerFeedback && <p style={{ fontSize: '0.85rem', margin: 0, color: 'var(--foreground)' }}>{app.organizerFeedback}</p>}
+                    </div>
+                  ) : canRate ? (
+                    <VendorRatingForm appId={app.id} onRate={(rating, feedback) => rateVendor(app.id, rating, feedback)} />
+                  ) : null}
+
                 </div>
-
-                {/* EXPANDED: Vendor Profile Details */}
-                {isExpanded && profile && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {profile.description && (
-                      <div className="sm:col-span-2">
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-1">About</p>
-                        <p className="text-sm text-gray-700">{profile.description}</p>
-                      </div>
-                    )}
-                    {profile.address && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Address</p>
-                        <p className="text-sm text-gray-700">📍 {profile.address}</p>
-                      </div>
-                    )}
-                    {profile.socialLinks && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Social Media</p>
-                        <p className="text-sm text-gray-700 whitespace-pre-line">{profile.socialLinks}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* PAYMENT SECTION */}
-                {app.paymentProof && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <a href={app.paymentProof} target="_blank"
-                      className="text-blue-600 underline text-sm">
-                      View Payment Proof
-                    </a>
-
-                    {app.paymentStatus === 'PENDING' && (
-                      <div className="flex gap-2 mt-2">
-                        <button onClick={() => verifyPayment(app.id, 'VERIFIED')}
-                          className="bg-green-500 text-white px-2 py-1 rounded text-sm">Verify</button>
-                        <button onClick={() => verifyPayment(app.id, 'REJECTED')}
-                          className="bg-red-500 text-white px-2 py-1 rounded text-sm">Reject</button>
-                      </div>
-                    )}
-                    {app.paymentStatus === 'VERIFIED' && (
-                      <p className="text-green-600 mt-1 text-sm">✅ Payment verified</p>
-                    )}
-                    {app.paymentStatus === 'REJECTED' && (
-                      <p className="text-red-600 mt-1 text-sm">❌ Payment rejected</p>
-                    )}
-                  </div>
-                )}
-
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Pagination */}
-        <div className="flex gap-2 mt-4 items-center">
-          <button onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1}
-            className={`px-3 py-1 rounded ${page === 1 ? 'bg-gray-200' : 'bg-gray-300 hover:bg-gray-400'}`}>
-            Prev
-          </button>
-          <span>Page {page}</span>
-          <button onClick={() => setPage(p => p + 1)} disabled={!hasMore}
-            className={`px-3 py-1 rounded ${!hasMore ? 'bg-gray-200' : 'bg-gray-300 hover:bg-gray-400'}`}>
-            Next
-          </button>
-        </div>
+        {(page > 1 || hasMore) && (
+          <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'center' }}>
+            <button onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1} className="ph-btn ph-btn-ghost" style={{ fontSize: '0.85rem' }}>← Prev</button>
+            <span style={{ display: 'flex', alignItems: 'center', fontWeight: 600, fontSize: '0.85rem' }}>Page {page}</span>
+            <button onClick={() => setPage(p => p + 1)} disabled={!hasMore} className="ph-btn ph-btn-ghost" style={{ fontSize: '0.85rem' }}>Next →</button>
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
+
+function VendorRatingForm({ appId, onRate }: { appId: string, onRate: (r: number, f: string) => void }) {
+  const [rating, setRating] = useState(0)
+  const [feedback, setFeedback] = useState('')
+
+  return (
+    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1.5px solid var(--border-color-soft)' }}>
+      <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 8px' }}>Rate this Vendor</p>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+        {[1, 2, 3, 4, 5].map(star => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => setRating(star)}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '1.5rem', color: star <= rating ? 'var(--ph-orange)' : 'var(--border-color)' }}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <textarea
+        className="ph-input"
+        placeholder="Optional feedback..."
+        value={feedback}
+        onChange={e => setFeedback(e.target.value)}
+        rows={2}
+        style={{ fontSize: '0.8rem', marginBottom: '8px' }}
+      />
+      <button
+        onClick={() => onRate(rating, feedback)}
+        disabled={rating === 0}
+        className="ph-btn ph-btn-accent"
+        style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+      >
+        Submit Rating
+      </button>
     </div>
   )
 }

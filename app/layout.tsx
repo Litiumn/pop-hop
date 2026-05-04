@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Syne } from "next/font/google";
+import { Space_Grotesk, Syne, Atkinson_Hyperlegible } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
@@ -15,6 +15,12 @@ const syne = Syne({
   weight: ["700", "800"],
 });
 
+const atkinsonHyperlegible = Atkinson_Hyperlegible({
+  variable: "--font-atkinson",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Pop Hop – Flea Market Platform",
   description: "The digital home for flea market vendors and organizers in Angeles City, Pampanga.",
@@ -28,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${syne.variable} h-full`}
+      className={`${spaceGrotesk.variable} ${syne.variable} ${atkinsonHyperlegible.variable} h-full`}
     >
       <body className="min-h-full flex flex-col">
         <Navbar />

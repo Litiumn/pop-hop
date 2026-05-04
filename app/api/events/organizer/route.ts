@@ -9,8 +9,27 @@ export async function GET() {
     }
 
     const events = await prisma.event.findMany({
-      where: { organizerId: user.userId },
-      orderBy: { createdAt: 'desc' }
+      where: {
+        OR: [
+          { organizerId: user.userId },
+          { collaborators: { some: { id: user.userId } } }
+        ]
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        applications: {
+          select: {
+            status: true,
+            paymentStatus: true
+          }
+        },
+        _count: {
+          select: { applications: true }
+        },
+        collaborators: {
+          select: { id: true, name: true, email: true }
+        }
+      }
     })
 
     return Response.json(events)
